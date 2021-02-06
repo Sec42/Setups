@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: urlnao
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add these lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# urlnao_enable (bool): Set to NO by default.
+#    Set it to YES to enable urlnao.
+
+. /etc/rc.subr
+
+name=urlnao
+rcvar=urlnao_enable
+pidfile="/var/run/${name}.pid"
+urlnao_user={{ uname }}
+urlnao_chdir=$( getent passwd "$urlnao_user" | cut -d: -f6 )
+
+load_rc_config $name
+
+: ${urlnao_enable:="NO"}
+
+command={{ prefix }}/sbin/${name}
+
+command_args=""
+command_args="${command_args} -s {{ prefix }}/var/lib/urlnao/urlnao.sock"
+command_args="${command_args} --hostname {{ webname }}"
+{% if portnum != 443 %}
+command_args="${command_args} --port :{{ portnum }}"
+{% endif %}
+command_args="${command_args} --protocol {{ proto }}"
+
+# Daemonize with "daemon"
+output_file="/var/log/${name}.log"
+
+runas=${urlnao_user}
+urlnao_user=
+procname=${command}
+
+command_args="-u ${runas} -o ${output_file} -p ${pidfile} ${command} ${command_args}"
+command="/usr/sbin/daemon"
+
+run_rc_command "$1"

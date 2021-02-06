@@ -1,0 +1,7 @@
+---
+webname: my.host.name
+portnum: 443
+proto: https
+certdir: /usr/local/etc/dehydrated/certs/my.host.name
+authuser: user
+authpass: secret

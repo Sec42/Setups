@@ -1,0 +1,40 @@
+server {
+{% if proto == "https" %}
+    listen       {{ portnum }} ssl;
+{% else %}
+    listen       {{ portnum }};
+{% endif %}
+    server_name  {{ webname }};
+
+    ssl_certificate      {{ certdir }}/fullchain.pem;
+    ssl_certificate_key  {{ certdir }}/privkey.pem;
+
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers  HIGH:!SHA1:!SHA256:!SHA384:!aNULL:!MD5:-ECDHE-ECDSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers  on;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_dhparam /etc/ssl/dhparam.pem;
+#    ssl_ecdh_curve secp384r1;
+
+    client_max_body_size 10M;
+
+    location / {
+        root   /usr/local/www/nginx;
+        index  index.html;
+    }
+
+    location ~ ^/(up|state) {
+	    proxy_pass http://unix:{{ prefix }}/var/lib/urlnao/urlnao.sock;
+	    auth_basic           "Restricted";
+	    auth_basic_user_file urlnao.htpasswd;
+    }
+
+    location ~ ^/(f|d) {
+	    proxy_pass http://unix:{{ prefix }}/var/lib/urlnao/urlnao.sock;
+    }
+}
